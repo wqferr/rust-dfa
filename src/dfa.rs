@@ -7,15 +7,17 @@ pub enum MyErr {
 }
 pub type MyResult<T> = Result<T, MyErr>;
 
-pub trait Identifier: Hash + Eq + Copy {}
-impl Identifier for i32 {}
+pub trait State: Hash + Eq {}
+pub trait Event: Hash + Eq {}
+impl State for i32 {}
+impl Event for i32 {}
 
-pub struct Machine<S: Identifier + 'static, E: Identifier + 'static> {
+pub struct Machine<S: State + 'static, E: Event + 'static> {
     state: S,
     transitions: HashMap<(S, E), S>,
 }
 
-impl<S: Identifier, E: Identifier> Machine<S, E> {
+impl<S: State, E: Event> Machine<S, E> {
     pub fn new<I>(initial_state: S, transition_list: I) -> Self
     where
         I: Iterator<Item = ((S, E), S)>,
