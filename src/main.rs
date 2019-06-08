@@ -1,33 +1,56 @@
 mod dfa;
-use dfa::{Event, Machine, State};
+use dfa::Machine;
+use std::convert::TryFrom;
+use std::io::BufRead;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
-enum MyState {
+enum State {
     Initial,
     Accepting,
 }
 
-impl State for MyState {}
+#[derive(PartialEq, Eq, Debug, Hash)]
+enum Symbol {
+    Zero,
+    One,
+}
+
+impl dfa::State for State {}
+impl dfa::Event for Symbol {}
+
+impl TryFrom<&str> for Symbol {
+    type Error = &'static str;
+
+    fn try_from(s: &str) -> Result<Self, &'static str> {
+        match s {
+            "0" => Ok(Symbol::Zero),
+            "1" => Ok(Symbol::One),
+            _ => Err("Symbol must be either 0 or 1"),
+        }
+    }
+}
 
 #[allow(unused_must_use)]
-fn main() {
-    let mut m: Machine<MyState, i32> = Machine::new(
-        MyState::Initial,
+fn main() -> dfa::Result<()> {
+    let mut m: Machine<State, Symbol> = Machine::new(
+        State::Initial,
         vec![
-            ((MyState::Initial, 0), MyState::Initial),
-            ((MyState::Initial, 1), MyState::Accepting),
-            ((MyState::Accepting, 0), MyState::Initial),
-            ((MyState::Accepting, 1), MyState::Accepting),
+            ((State::Initial, Symbol::Zero), State::Initial),
+            ((State::Initial, Symbol::One), State::Accepting),
+            ((State::Accepting, Symbol::Zero), State::Initial),
+            ((State::Accepting, Symbol::One), State::Accepting),
         ]
         .into_iter(),
     );
 
-    m.feed(0);
-    m.feed(1);
-    m.feed(1);
-    m.feed(0);
-    m.feed(0);
-    m.feed(1);
+    let mut line = String::new();
+    std::io::stdin().lock().read_line(&mut line);
+    line.split_whitespace()
+        .map(Symbol::try_from)
+        .map(Result::unwrap)
+        .map(|symbol| m.feed(symbol))
+        .for_each(Result::unwrap);
 
-    println!("{:?}", m.state());
+    println!("{:?}", m.state() == State::Accepting);
+    Ok(())
 }

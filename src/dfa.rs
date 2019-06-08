@@ -2,15 +2,14 @@ use std::cmp::Eq;
 use std::collections::HashMap;
 use std::hash::Hash;
 
-pub enum MyErr {
+pub trait State: Hash + Eq + Copy {}
+pub trait Event: Hash + Eq {}
+
+#[derive(Debug)]
+pub enum Err {
     IllegalTransition,
 }
-pub type MyResult<T> = Result<T, MyErr>;
-
-pub trait State: Hash + Eq {}
-pub trait Event: Hash + Eq {}
-impl State for i32 {}
-impl Event for i32 {}
+pub type Result<T> = std::result::Result<T, Err>;
 
 pub struct Machine<S: State + 'static, E: Event> {
     state: S,
@@ -28,12 +27,12 @@ impl<S: State, E: Event> Machine<S, E> {
         }
     }
 
-    pub fn feed(&mut self, event: E) -> MyResult<()> {
+    pub fn feed(&mut self, event: E) -> Result<()> {
         if let Some(next_state) = self.transitions.get(&(self.state, event)) {
             self.state = *next_state;
             Ok(())
         } else {
-            Err(MyErr::IllegalTransition)
+            Err(Err::IllegalTransition)
         }
     }
 
