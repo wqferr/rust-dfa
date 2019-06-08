@@ -12,7 +12,7 @@ pub trait Event: Hash + Eq {}
 impl State for i32 {}
 impl Event for i32 {}
 
-pub struct Machine<S: State + 'static, E: Event + 'static> {
+pub struct Machine<S: State + 'static, E: Event> {
     state: S,
     transitions: HashMap<(S, E), S>,
 }
